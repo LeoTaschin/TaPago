@@ -7,9 +7,10 @@ import {
   updateUserTotals 
 } from '../services/debtService';
 import { getUserData } from '../services/userService';
-import { auth } from '../config/firebase';
+import { useAuth } from '../hooks/useAuth';
 
 export function useDebts() {
+  const { user } = useAuth();
   const [debtsAsCreditor, setDebtsAsCreditor] = useState([]);
   const [debtsAsDebtor, setDebtsAsDebtor] = useState([]);
   const [userTotals, setUserTotals] = useState({ totalToReceive: 0, totalToPay: 0 });
@@ -18,9 +19,8 @@ export function useDebts() {
 
   // Buscar todas as dívidas do usuário
   const fetchDebts = useCallback(async () => {
-    const currentUser = auth.currentUser;
-    if (!currentUser?.uid) {
-      console.error('useDebts: Usuário não autenticado');
+    if (!user?.uid) {
+      console.log('useDebts: Usuário não autenticado');
       setError('Usuário não autenticado');
       return;
     }
@@ -29,11 +29,11 @@ export function useDebts() {
       setLoading(true);
       setError(null);
 
-      console.log('Buscando dívidas para usuário:', currentUser.uid);
+      console.log('Buscando dívidas para usuário:', user.uid);
 
       const [creditorDebts, debtorDebts] = await Promise.all([
-        getDebtsAsCreditor(currentUser.uid),
-        getDebtsAsDebtor(currentUser.uid)
+        getDebtsAsCreditor(user.uid),
+        getDebtsAsDebtor(user.uid)
       ]);
 
       // Buscar dados dos usuários envolvidos nas dívidas
@@ -46,8 +46,8 @@ export function useDebts() {
       );
 
       const usersMap = {};
-      usersData.forEach(user => {
-        if (user) usersMap[user.uid] = user;
+      usersData.forEach(userData => {
+        if (userData) usersMap[userData.uid] = userData;
       });
 
       // Adicionar dados dos usuários às dívidas
@@ -65,7 +65,7 @@ export function useDebts() {
       setDebtsAsDebtor(enrichedDebtorDebts);
 
       // Atualizar totais
-      const totals = await updateUserTotals(currentUser.uid);
+      const totals = await updateUserTotals(user.uid);
       setUserTotals(totals);
 
     } catch (err) {
@@ -74,12 +74,11 @@ export function useDebts() {
     } finally {
       setLoading(false);
     }
-  }, []); // Removida a dependência de userId
+  }, [user?.uid]);
 
   // Criar uma nova dívida
   const addDebt = async (debtorId, amount, description) => {
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
+    if (!user?.uid) {
       console.error('useDebts: Usuário não autenticado');
       throw new Error('Usuário não autenticado');
     }
@@ -89,13 +88,13 @@ export function useDebts() {
       setError(null);
 
       console.log('Iniciando criação de dívida:', {
-        creditorId: currentUser.uid,
+        creditorId: user.uid,
         debtorId,
         amount,
         description
       });
 
-      const result = await createDebt(currentUser.uid, debtorId, amount, description);
+      const result = await createDebt(user.uid, debtorId, amount, description);
       
       if (result.success) {
         await fetchDebts(); // Recarregar dívidas após criar nova
@@ -113,8 +112,7 @@ export function useDebts() {
 
   // Marcar uma dívida como paga
   const payDebt = useCallback(async (debtId) => {
-    const currentUser = auth.currentUser;
-    if (!currentUser?.uid || !debtId) {
+    if (!user?.uid || !debtId) {
       console.error('useDebts: Usuário não autenticado ou debtId não fornecido');
       return { success: false, error: 'Usuário não autenticado ou debtId não fornecido' };
     }
@@ -132,24 +130,20 @@ export function useDebts() {
     } finally {
       setLoading(false);
     }
-  }, [fetchDebts]);
+  }, [user?.uid, fetchDebts]);
 
-  // Carregar dívidas quando o usuário estiver autenticado
+  // Carregar dívidas quando o usuário mudar
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        console.log('Usuário autenticado, carregando dívidas:', user.uid);
-        fetchDebts();
-      } else {
-        console.log('Usuário não autenticado, limpando dívidas');
-        setDebtsAsCreditor([]);
-        setDebtsAsDebtor([]);
-        setUserTotals({ totalToReceive: 0, totalToPay: 0 });
-      }
-    });
-
-    return () => unsubscribe();
-  }, [fetchDebts]);
+    if (user?.uid) {
+      console.log('Usuário autenticado, carregando dívidas:', user.uid);
+      fetchDebts();
+    } else {
+      console.log('Usuário não autenticado, limpando dívidas');
+      setDebtsAsCreditor([]);
+      setDebtsAsDebtor([]);
+      setUserTotals({ totalToReceive: 0, totalToPay: 0 });
+    }
+  }, [user?.uid, fetchDebts]);
 
   return {
     debtsAsCreditor,    // Dívidas onde o usuário é credor

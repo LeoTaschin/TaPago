@@ -78,18 +78,29 @@ export const getUserData = async (userId) => {
 // Buscar amigos do usuário
 export const getUserFriends = async (userId) => {
   try {
+    console.log('userService - getUserFriends - Iniciando busca para:', userId);
+    
+    if (!userId) {
+      console.error('userService - getUserFriends - userId não fornecido');
+      throw new Error('ID do usuário não fornecido');
+    }
+
     // Primeiro, buscar o documento do usuário para obter a lista de IDs dos amigos
     const userRef = doc(db, 'users', userId);
     const userDoc = await getDoc(userRef);
 
     if (!userDoc.exists()) {
+      console.error('userService - getUserFriends - Usuário não encontrado:', userId);
       throw new Error('Usuário não encontrado');
     }
 
     const userData = userDoc.data();
     const friendsList = userData.friends || [];
 
+    console.log('userService - getUserFriends - Lista de IDs dos amigos:', friendsList);
+
     if (friendsList.length === 0) {
+      console.log('userService - getUserFriends - Usuário não tem amigos');
       return [];
     }
 
@@ -98,17 +109,20 @@ export const getUserFriends = async (userId) => {
     const friendsQuery = query(usersRef, where('uid', 'in', friendsList));
     const friendsSnapshot = await getDocs(friendsQuery);
 
-    return friendsSnapshot.docs.map(doc => {
+    const friends = friendsSnapshot.docs.map(doc => {
       const data = doc.data();
       return {
         id: data.uid,
-        username: data.username,
-        email: data.email,
-        photoURL: data.photoURL
+        username: data.username || 'Sem nome',
+        email: data.email || 'Sem email',
+        photoURL: data.photoURL || null
       };
     });
+
+    console.log('userService - getUserFriends - Amigos encontrados:', friends.length);
+    return friends;
   } catch (error) {
-    console.error('Error fetching friends:', error);
+    console.error('userService - getUserFriends - Erro:', error);
     throw error;
   }
 }; 

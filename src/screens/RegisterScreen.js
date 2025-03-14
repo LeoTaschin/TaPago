@@ -120,6 +120,7 @@ export default function RegisterScreen() {
     setPasswordError('');
     setUsernameError('');
 
+    // Validações
     if (!email) {
       setEmailError('O e-mail é obrigatório. Por favor, insira um e-mail válido.');
       console.error('Erro: Email não fornecido.');
@@ -148,6 +149,8 @@ export default function RegisterScreen() {
       return;
     }
 
+    let user = null;
+
     try {
       setLoading(true);
       
@@ -163,51 +166,108 @@ export default function RegisterScreen() {
       }
       console.log('Username disponível, continuando com o registro...');
 
-      setUploading(true);
+      // 1. Criar o usuário na autenticação
       console.log('Tentando criar usuário com email:', email);
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
+      user = userCredential.user;
       console.log('Usuário criado com sucesso:', user.uid);
 
+      // 2. Upload da imagem (se houver)
       let photoURL = null;
-      if (image) {
-        console.log('Iniciando upload da imagem selecionada...');
-        photoURL = await uploadImage(image);
-      } else {
-        console.log('Usando imagem padrão como foto de perfil...');
-        photoURL = await uploadImage(DEFAULT_PROFILE_IMAGE);
+      try {
+        setUploading(true);
+        if (image) {
+          console.log('Iniciando upload da imagem selecionada...');
+          photoURL = await uploadImage(image);
+        } else {
+          console.log('Usando imagem padrão como foto de perfil...');
+          photoURL = await uploadImage(DEFAULT_PROFILE_IMAGE);
+        }
+        console.log('Imagem carregada com sucesso:', photoURL);
+      } catch (imageError) {
+        console.error('Erro ao fazer upload da imagem:', imageError);
+        // Continuar mesmo se houver erro no upload da imagem
       }
-      console.log('Imagem carregada com sucesso:', photoURL);
 
-      console.log('Atualizando perfil do usuário com a foto...');
-      await updateProfile(user, { photoURL });
-      console.log('Perfil do usuário atualizado com a foto.');
+      // 3. Atualizar o perfil do usuário com a foto
+      try {
+        console.log('Atualizando perfil do usuário com a foto...');
+        await updateProfile(user, { 
+          photoURL,
+          displayName: username 
+        });
+        console.log('Perfil do usuário atualizado com a foto.');
+      } catch (profileError) {
+        console.error('Erro ao atualizar perfil:', profileError);
+        // Continuar mesmo se houver erro na atualização do perfil
+      }
 
-      console.log('Criando documento do usuário no Firestore...');
-      await setDoc(doc(db, 'users', user.uid), {
-        uid: user.uid,
-        email,
-        username,
-        photoURL,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-      console.log('Documento do usuário criado no Firestore.');
+      // Pequena pausa para garantir que a autenticação está completa
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      console.log('Salvando nome de usuário para verificação futura...');
-      await setDoc(doc(db, 'usernames', username), { uid: user.uid });
-      console.log('Nome de usuário salvo para verificação futura.');
+      // 4. Criar documento do usuário no Firestore
+      try {
+        console.log('Criando documento do usuário no Firestore...');
+        const userData = {
+          uid: user.uid,
+          email,
+          username,
+          photoURL,
+          friends: [],
+          debtsAsCreditor: [],
+          debtsAsDebtor: [],
+          totalToReceive: 0,
+          totalToPay: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        
+        const userRef = doc(db, 'users', user.uid);
+        await setDoc(userRef, userData);
+        console.log('Documento do usuário criado no Firestore.');
 
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'AccountConfirmation' }],
-      });
+        // 5. Salvar username para verificação futura
+        console.log('Salvando nome de usuário para verificação futura...');
+        const usernameRef = doc(db, 'usernames', username);
+        await setDoc(usernameRef, { uid: user.uid });
+        console.log('Nome de usuário salvo para verificação futura.');
+
+        // 6. Navegar para a tela de confirmação
+        navigation.navigate('AccountConfirmation');
+      } catch (firestoreError) {
+        console.error('Erro ao criar documentos no Firestore:', firestoreError);
+        // Se houver erro ao criar os documentos, tentar limpar o usuário
+        if (user) {
+          try {
+            await user.delete();
+          } catch (deleteError) {
+            console.error('Erro ao deletar usuário após falha:', deleteError);
+          }
+        }
+        throw firestoreError;
+      }
+      
     } catch (error) {
       console.error('Erro durante o registro:', error);
-      if (error.code === 'auth/email-already-in-use') {
-        setEmailError('Este e-mail já está cadastrado. Por favor, use outro e-mail.');
-      } else {
-        Alert.alert('Erro', 'Ocorreu um erro durante o registro. Por favor, tente novamente.');
+      
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          setEmailError('Este e-mail já está em uso. Por favor, use outro e-mail ou faça login.');
+          break;
+        case 'auth/invalid-email':
+          setEmailError('O formato do e-mail é inválido.');
+          break;
+        case 'auth/operation-not-allowed':
+          setEmailError('O registro com e-mail e senha não está habilitado.');
+          break;
+        case 'auth/weak-password':
+          setPasswordError('A senha é muito fraca. Use uma senha mais forte.');
+          break;
+        default:
+          Alert.alert(
+            'Erro no registro',
+            'Ocorreu um erro ao criar sua conta. Por favor, tente novamente.'
+          );
       }
     } finally {
       setLoading(false);

@@ -2,11 +2,20 @@ import React, { useRef, useEffect } from 'react';
 import { View, StyleSheet, Animated, Dimensions } from 'react-native';
 import { Friends } from '../screens/Friends';
 import { Groups } from '../screens/Groups';
+import { Activity } from '../screens/Activity';
 import { useTheme } from '../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
-export function MainTabs({ activeTab }) {
+export function MainTabs({ 
+  activeTab, 
+  onTabChange, 
+  debtsAsCreditor, 
+  debtsAsDebtor, 
+  loading, 
+  error,
+  userTotals,
+}) {
   const { colors } = useTheme();
   const slideAnim = useRef(new Animated.Value(0)).current;
   const prevTabRef = useRef(activeTab);
@@ -44,9 +53,12 @@ export function MainTabs({ activeTab }) {
         return <Groups />;
       case 'activity':
         return (
-          <View style={[styles.container, { backgroundColor: colors.background }]}>
-            {/* Placeholder para a tela de Atividade */}
-          </View>
+          <Activity 
+            userTotals={userTotals}
+            debtsAsCreditor={debtsAsCreditor}
+            debtsAsDebtor={debtsAsDebtor}
+            loading={loading}
+          />
         );
       default:
         return <Friends />;

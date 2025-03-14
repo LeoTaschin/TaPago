@@ -16,6 +16,7 @@ import {
   FlatList,
   Modal,
   Animated,
+  RefreshControl,
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { SPACING, moderateScale } from '../utils/dimensions';
@@ -33,6 +34,7 @@ export function Friends() {
   const [searchResults, setSearchResults] = useState(null);
   const [searchError, setSearchError] = useState('');
   const [showSuccessAlert, setShowSuccessAlert] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.3)).current;
 
@@ -333,6 +335,17 @@ export function Friends() {
     </View>
   );
 
+  const onRefresh = React.useCallback(async () => {
+    try {
+      setRefreshing(true);
+      await fetchFriends();
+    } catch (error) {
+      console.error('Friends - onRefresh - Erro ao atualizar amigos:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Text style={[textStyles.h4, { color: colors.text, marginBottom: SPACING.md }]}>
@@ -352,6 +365,14 @@ export function Friends() {
               keyExtractor={item => item.id}
               contentContainerStyle={styles.friendsList}
               showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  colors={[colors.primary]}
+                  tintColor={colors.primary}
+                />
+              }
               ListFooterComponent={
                 <View style={styles.footerContainer}>
                   <TouchableOpacity 

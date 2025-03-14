@@ -2,9 +2,47 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Regra temporária para debug - REMOVER ANTES DE PRODUÇÃO
+    // Função auxiliar para verificar se o usuário está criando seu próprio documento
+    function isCreatingOwnDocument(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    // Regras para a coleção users
+    match /users/{userId} {
+      // Permitir leitura para usuários autenticados
+      allow read: if request.auth != null;
+      // Permitir criação se o ID do documento corresponder ao ID do usuário
+      allow create: if isCreatingOwnDocument(userId);
+      // Permitir atualização/exclusão apenas pelo próprio usuário
+      allow update, delete: if isCreatingOwnDocument(userId);
+    }
+
+    // Regras para a coleção usernames
+    match /usernames/{username} {
+      // Permitir leitura para todos (necessário para verificar disponibilidade)
+      allow read: if true;
+      // Permitir criação se o UID no documento corresponder ao UID do usuário autenticado
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      // Não permitir atualização/exclusão
+      allow update, delete: if false;
+    }
+
+    // Regras para a coleção de uploads
+    match /uploads/{document=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Regras para imagens de perfil
+    match /profile_images/{imageId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Regras para outras coleções
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
     }
   }
 } 

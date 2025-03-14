@@ -1,33 +1,32 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
-import { moderateScale } from '../utils/dimensions';
 import { LogoSVG } from './LogoSVG';
 
-const LOGO_SIZE = 80; // Tamanho estático padrão
+const LOGO_SIZE = 80;
+const FONT_SCALE = 0.35;
 
 export function Logo({ size = LOGO_SIZE }) {
   const { textStyles, colors } = useTheme();
-  const fontSize = moderateScale(size * 0.35); // Reduzido de 0.4 para 0.35 para evitar corte
+  const fontSize = Math.floor(size * FONT_SCALE); // Ensure integer font size
   
   return (
     <View style={styles.container}>
       <LogoSVG 
-        size={fontSize * 1.2}
+        size={Math.floor(fontSize * 1.2)}
         color={colors.primary}
       />
       <Text 
         style={[
-          textStyles.header,
+          styles.text,
           { 
-            fontSize: fontSize, 
+            fontSize, 
             color: colors.text,
-            includeFontPadding: false, // Remove padding extra da fonte
-            textAlignVertical: 'center', // Alinha verticalmente
-            lineHeight: fontSize * 1.2, // Ajusta o lineHeight para evitar corte
+            lineHeight: Math.floor(fontSize * 1.2),
           }
         ]}
-        numberOfLines={1} // Garante que o texto fique em uma única linha
+        numberOfLines={1}
+        allowFontScaling={false}
       >
         TaPago
       </Text>
@@ -40,7 +39,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: moderateScale(8), // Aumentado de 5 para 8 para dar mais espaço entre o ícone e o texto
-    paddingHorizontal: moderateScale(4), // Adiciona um pequeno padding horizontal
+    gap: 8,
+    paddingHorizontal: 4,
   },
+  text: {
+    fontWeight: '300',
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+  }
 });

@@ -227,7 +227,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: Platform.OS === 'ios' ? 50 : 25,
-    backgroundColor: colors.background,
   },
   keyboardView: {
     flex: 1,

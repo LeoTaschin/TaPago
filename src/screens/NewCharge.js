@@ -35,28 +35,12 @@ export default function NewCharge() {
     console.log('NewCharge useEffect - user:', user?.uid);
     console.log('NewCharge useEffect - selectedTarget:', selectedTarget);
 
-    const checkAuth = async () => {
-      if (!user) {
-        console.log('NewCharge - Usuário não autenticado, redirecionando para Login');
-        navigation.replace('Login');
-        return;
-      }
-      
-      // Aguarda um pequeno delay para garantir que os parâmetros foram recebidos
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      if (!selectedTarget?.id) {
-        console.log('NewCharge - Nenhum amigo selecionado, voltando');
-        console.log('NewCharge - route.params:', route.params);
-        navigation.goBack();
-        return;
-      }
-
-      console.log('NewCharge - Tudo ok, exibindo tela');
-    };
-
-    checkAuth();
-  }, [user, selectedTarget, navigation, route.params]);
+    if (!selectedTarget?.id) {
+      console.log('NewCharge - Nenhum amigo selecionado, voltando');
+      console.log('NewCharge - route.params:', route.params);
+      navigation.goBack();
+    }
+  }, [selectedTarget, navigation, route.params]);
 
   const handleClose = () => {
     navigation.goBack();
@@ -133,7 +117,7 @@ export default function NewCharge() {
         <TouchableOpacity onPress={handleClose}>
           <Ionicons name="close" size={moderateScale(24)} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[textStyles.h2, { color: colors.text }]}>Nova Cobrança</Text>
+        <Text style={[textStyles.h3, { color: colors.text }]}>Nova Cobrança</Text>
         <TouchableOpacity 
           onPress={handleCreate}
           disabled={submitting || loading}

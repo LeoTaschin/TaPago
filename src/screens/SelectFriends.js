@@ -23,40 +23,50 @@ export default function SelectFriends({ navigation, route }) {
   const [friends, setFriends] = useState([]);
   const [selectedFriends, setSelectedFriends] = useState(route.params?.selectedFriends || []);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useFocusEffect(
     React.useCallback(() => {
-      if (user?.uid) {
-        fetchFriends();
-      }
-    }, [user])
-  );
-
-  const fetchFriends = async () => {
-    try {
-      const userRef = collection(db, 'users');
-      const userDoc = await getDocs(query(userRef, where('uid', '==', user.uid)));
-      
-      if (!userDoc.empty) {
-        const userData = userDoc.docs[0].data();
-        const friendsList = userData.friends || [];
-        
-        if (friendsList.length > 0) {
-          const friendsQuery = query(userRef, where('uid', 'in', friendsList));
-          const friendsSnapshot = await getDocs(friendsQuery);
-          const friendsData = friendsSnapshot.docs.map(doc => ({
-            id: doc.data().uid,
-            ...doc.data()
-          }));
-          setFriends(friendsData);
+      const loadFriends = async () => {
+        if (!user?.uid) {
+          setError('Faça login para continuar');
+          setIsLoading(false);
+          return;
         }
-      }
-    } catch (error) {
-      console.error('Error fetching friends:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+
+        try {
+          setIsLoading(true);
+          const userRef = collection(db, 'users');
+          const userDoc = await getDocs(query(userRef, where('uid', '==', user.uid)));
+          
+          if (!userDoc.empty) {
+            const userData = userDoc.docs[0].data();
+            const friendsList = userData.friends || [];
+            
+            if (friendsList.length > 0) {
+              const friendsQuery = query(userRef, where('uid', 'in', friendsList));
+              const friendsSnapshot = await getDocs(friendsQuery);
+              const friendsData = friendsSnapshot.docs.map(doc => ({
+                id: doc.data().uid,
+                ...doc.data()
+              }));
+              setFriends(friendsData);
+            } else {
+              setFriends([]);
+            }
+            setError(null);
+          }
+        } catch (error) {
+          console.error('Erro ao carregar amigos:', error);
+          setError('Não foi possível carregar seus amigos');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      loadFriends();
+    }, [user?.uid])
+  );
 
   const toggleFriendSelection = (friend) => {
     setSelectedFriends(prev => {
@@ -70,8 +80,11 @@ export default function SelectFriends({ navigation, route }) {
   };
 
   const handleConfirm = () => {
+    if (selectedFriends.length === 0) return;
+    
     navigation.navigate('NewCharge', {
-      selectedFriends
+      selectedFriends,
+      type: 'group'
     });
   };
 

@@ -59,15 +59,14 @@ export default function LoginScreen({ navigation }) {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log('Login bem-sucedido:', userCredential.user.email);
       
-      // Primeiro fazemos a navegação
+      // Primeiro salvamos as credenciais
+      await saveCredentials(email, password);
+      console.log('Credenciais salvas com sucesso');
+      
+      // Depois fazemos a navegação
       navigation.reset({
         index: 0,
         routes: [{ name: 'Home' }],
-      });
-      
-      // Depois salvamos as credenciais em background
-      saveCredentials(email, password).catch(error => {
-        console.warn('Erro ao salvar credenciais:', error);
       });
       
     } catch (error) {

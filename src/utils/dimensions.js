@@ -12,35 +12,35 @@ export const scaleWidth = (size) => (width / guidelineBaseWidth) * size;
 // Função para escalar verticalmente
 export const scaleHeight = (size) => (height / guidelineBaseHeight) * size;
 
-// Função para escalar proporcionalmente (útil para fontes e elementos que precisam manter proporção)
-export const moderateScale = (size, factor = 0.5) => {
-  return size + (scaleWidth(size) - size) * factor;
+// Fixed spacing values
+export const SPACING = {
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 40,
+};
+
+// Fixed font sizes
+export const FONT_SIZES = {
+  xs: 12,
+  sm: 14,
+  md: 16,
+  lg: 18,
+  xl: 20,
+  xxl: 24,
+  xxxl: 32,
+};
+
+// Safe scaling function that ensures integer values
+export const moderateScale = (size) => {
+  return Math.floor(size);
 };
 
 // Dimensões da tela
 export const screenWidth = width;
 export const screenHeight = height;
-
-// Espaçamentos padrão responsivos
-export const SPACING = {
-  xs: moderateScale(4),
-  sm: moderateScale(8),
-  md: moderateScale(16),
-  lg: moderateScale(24),
-  xl: moderateScale(32),
-  xxl: moderateScale(40),
-};
-
-// Tamanhos de fonte responsivos
-export const FONT_SIZES = {
-  xs: moderateScale(12),
-  sm: moderateScale(14),
-  md: moderateScale(16),
-  lg: moderateScale(18),
-  xl: moderateScale(20),
-  xxl: moderateScale(24),
-  xxxl: moderateScale(32),
-};
 
 // Breakpoints para diferentes tamanhos de tela
 export const BREAKPOINTS = {

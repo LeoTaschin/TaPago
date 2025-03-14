@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import { SelectionToolbar } from '../components/SelectionToolbar';
 import { Ionicons } from '@expo/vector-icons';
 import { SPACING, moderateScale } from '../utils/dimensions';
 import { getUserFriends } from '../services/userService';
-import { auth } from '../firebase/firebaseConfig';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function SelectDebtTarget({ navigation }) {
   const { colors, textStyles } = useTheme();
@@ -25,107 +25,71 @@ export default function SelectDebtTarget({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    console.log('SelectDebtTarget - useEffect - user:', user?.uid);
-    console.log('SelectDebtTarget - useEffect - auth.currentUser:', auth.currentUser?.uid);
+  // Carregar amigos quando a tela receber foco
+  useFocusEffect(
+    React.useCallback(() => {
+      const loadFriends = async () => {
+        if (!user?.uid) return;
+        
+        try {
+          setLoading(true);
+          const friendsList = await getUserFriends(user.uid);
+          setFriends(friendsList);
+          setError(null);
+        } catch (err) {
+          console.error('Erro ao carregar amigos:', err);
+          setError('Não foi possível carregar seus amigos');
+        } finally {
+          setLoading(false);
+        }
+      };
 
-    if (!user) {
-      console.log('SelectDebtTarget - useEffect - Usuário não autenticado');
-      setLoading(false);
-      setError('Usuário não autenticado');
-      return;
-    }
-
-    loadFriends();
-  }, [user]);
-
-  const loadFriends = async () => {
-    if (!user?.uid) {
-      console.log('SelectDebtTarget - loadFriends - Usuário não autenticado');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-      console.log('SelectDebtTarget - loadFriends - Buscando amigos para:', user.uid);
-      const friendsList = await getUserFriends(user.uid);
-      console.log('SelectDebtTarget - loadFriends - Lista de amigos:', friendsList);
-      setFriends(friendsList);
-    } catch (err) {
-      console.error('SelectDebtTarget - loadFriends - Erro:', err);
-      setError('Não foi possível carregar seus amigos. Por favor, tente novamente.');
-      setFriends([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      loadFriends();
+    }, [user?.uid])
+  );
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
   };
 
-  const handleSelectTarget = (target) => {
-    console.log('SelectDebtTarget - Iniciando navegação para NewCharge');
-    console.log('SelectDebtTarget - Amigo selecionado:', target);
-    console.log('SelectDebtTarget - Tipo:', activeTab);
+  const navigateToNewCharge = (friend) => {
+    if (!friend?.id) return;
 
-    if (!target?.id) {
-      console.error('SelectDebtTarget - Erro: amigo sem ID');
-      return;
-    }
-
-    // Garantir que o amigo tem todos os campos necessários
-    const selectedTarget = {
-      id: target.id,
-      username: target.username || '',
-      email: target.email || '',
-      photoURL: target.photoURL || null
-    };
-
-    const params = {
-      selectedTarget,
+    navigation.navigate('NewCharge', {
+      selectedTarget: {
+        id: friend.id,
+        username: friend.username || '',
+        email: friend.email || '',
+        photoURL: friend.photoURL || null
+      },
       type: activeTab
-    };
-
-    console.log('SelectDebtTarget - Parâmetros de navegação:', params);
-    
-    // Usar setTimeout para garantir que a navegação aconteça no próximo ciclo
-    setTimeout(() => {
-      navigation.navigate('NewCharge', params);
-    }, 0);
+    });
   };
 
-  const renderFriendItem = ({ item }) => {
-    console.log('Renderizando amigo:', item);
-    return (
-      <TouchableOpacity
-        style={[styles.itemContainer, { backgroundColor: colors.cardBackground }]}
-        onPress={() => {
-          console.log('Clique no amigo:', item);
-          handleSelectTarget(item);
-        }}
-      >
-        <Image
-          source={{ uri: item.photoURL || 'https://via.placeholder.com/40' }}
-          style={styles.avatar}
-        />
-        <View style={styles.itemInfo}>
-          <Text style={[textStyles.body, { color: colors.text }]}>
-            {item.username}
-          </Text>
-          <Text style={[textStyles.caption, { color: colors.textSecondary }]}>
-            {item.email}
-          </Text>
-        </View>
-        <Ionicons 
-          name="chevron-forward" 
-          size={moderateScale(20)} 
-          color={colors.textSecondary} 
-        />
-      </TouchableOpacity>
-    );
-  };
+  const renderFriendItem = ({ item }) => (
+    <TouchableOpacity
+      style={[styles.itemContainer, { backgroundColor: colors.cardBackground }]}
+      onPress={() => navigateToNewCharge(item)}
+    >
+      <Image
+        source={{ uri: item.photoURL || 'https://via.placeholder.com/40' }}
+        style={styles.avatar}
+      />
+      <View style={styles.itemInfo}>
+        <Text style={[textStyles.body, { color: colors.text }]}>
+          {item.username}
+        </Text>
+        <Text style={[textStyles.caption, { color: colors.textSecondary }]}>
+          {item.email}
+        </Text>
+      </View>
+      <Ionicons 
+        name="chevron-forward" 
+        size={moderateScale(20)} 
+        color={colors.textSecondary} 
+      />
+    </TouchableOpacity>
+  );
 
   const renderContent = () => {
     if (loading) {
@@ -142,12 +106,22 @@ export default function SelectDebtTarget({ navigation }) {
           <Text style={[textStyles.body, { color: colors.error }]}>{error}</Text>
           <TouchableOpacity 
             style={[styles.retryButton, { backgroundColor: colors.primary }]}
-            onPress={loadFriends}
+            onPress={() => loadFriends()}
           >
             <Text style={[textStyles.button, { color: colors.white }]}>
               Tentar Novamente
             </Text>
           </TouchableOpacity>
+        </View>
+      );
+    }
+
+    if (!user?.uid) {
+      return (
+        <View style={styles.centerContainer}>
+          <Text style={[textStyles.body, { color: colors.textSecondary }]}>
+            Faça login para continuar
+          </Text>
         </View>
       );
     }
