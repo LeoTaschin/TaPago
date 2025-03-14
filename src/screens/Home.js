@@ -89,6 +89,27 @@ export default function HomeScreen({ navigation }) {
   } = useDebts();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  // Estilos que dependem do tema
+  const dynamicStyles = {
+    container: {
+      ...styles.container,
+      backgroundColor: colors.background
+    },
+    balanceCard: {
+      ...styles.balanceCard,
+      backgroundColor: colors.cardBackground
+    },
+    balanceDetails: {
+      flexDirection: 'row',
+      justifyContent: 'flex-start',
+      gap: SPACING.xl,
+      width: '100%',
+      marginTop: SPACING.md,
+      paddingTop: SPACING.md,
+      borderTopWidth: 1,
+    },
+  };
+
   // Atualiza quando a tela recebe foco
   useFocusEffect(
     React.useCallback(() => {
@@ -246,24 +267,14 @@ export default function HomeScreen({ navigation }) {
         <View style={[styles.balanceCard, { backgroundColor: colors.cardBackground }]}>
           <View style={styles.balanceHeader}>
             <View style={styles.balanceTitleContainer}>
-              <Ionicons 
-                name={isPositive ? "trending-up" : "trending-down"} 
-                size={24} 
-                color={isPositive ? colors.success : colors.error} 
-                style={styles.balanceIcon}
-              />
-              <Text style={[textStyles.h3, { color: colors.text }]}>
+              <Text style={[textStyles.caption, { color: colors.text, textTransform: 'uppercase' }]}>
                 Balanço Geral
               </Text>
-            </View>
-            <View style={[
-              styles.balanceIndicator, 
-              { backgroundColor: isPositive ? colors.success + '20' : colors.error + '20' }
-            ]}>
               <Ionicons 
-                name={isPositive ? "arrow-up" : "arrow-down"} 
+                name={isPositive ? "trending-up" : "trending-down"} 
                 size={16} 
-                color={isPositive ? colors.success : colors.error}
+                color={isPositive ? colors.success : colors.error} 
+                style={styles.balanceIcon}
               />
             </View>
           </View>
@@ -275,34 +286,15 @@ export default function HomeScreen({ navigation }) {
               <AnimatedValue 
                 value={Math.abs(balance)}
                 style={[
-                  textStyles.h1, 
-                  { color: isPositive ? colors.success : colors.error }
+                  textStyles.h3, 
+                  { 
+                    color: isPositive ? colors.success : colors.error,
+                    alignSelf: 'flex-start',
+                    marginTop: SPACING.xs,
+                    fontWeight: '400'
+                  }
                 ]}
               />
-              <View style={styles.balanceDetails}>
-                <View style={styles.balanceDetailItem}>
-                  <Ionicons 
-                    name="arrow-down" 
-                    size={16} 
-                    color={colors.success} 
-                    style={styles.detailIcon}
-                  />
-                  <Text style={[textStyles.body, { color: colors.success }]}>
-                    R$ {userTotals.totalToReceive.toFixed(2)}
-                  </Text>
-                </View>
-                <View style={styles.balanceDetailItem}>
-                  <Ionicons 
-                    name="arrow-up" 
-                    size={16} 
-                    color={colors.error} 
-                    style={styles.detailIcon}
-                  />
-                  <Text style={[textStyles.body, { color: colors.error }]}>
-                    R$ {userTotals.totalToPay.toFixed(2)}
-                  </Text>
-                </View>
-              </View>
             </View>
           )}
         </View>
@@ -313,15 +305,19 @@ export default function HomeScreen({ navigation }) {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle={colors.statusBar} />
-      <View style={styles.header}>
-        <Logo size={moderateScale(40)} />
-        <TouchableOpacity onPress={handleSignOut}>
+      <View style={[styles.header, { 
+        borderBottomColor: colors.border + '20',
+        backgroundColor: colors.cardBackground 
+      }]}>
+        <Logo size={moderateScale(48)} />
+        <TouchableOpacity onPress={handleSignOut} style={styles.logoutButton}>
           <Ionicons name="log-out-outline" size={moderateScale(24)} color={colors.text} />
         </TouchableOpacity>
       </View>
 
       <View style={styles.content}>
         {renderDebtsSummary()}
+        <View style={[styles.separator, { backgroundColor: colors.border }]} />
         <MainTabs 
           activeTab={activeTab}
           onTabChange={handleTabChange}
@@ -348,75 +344,76 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
+    borderBottomWidth: 1,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  logoutButton: {
+    padding: SPACING.xs,
   },
   content: {
     flex: 1,
   },
   summaryContainer: {
     paddingHorizontal: SPACING.lg,
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.sm,
   },
   balanceCard: {
-    padding: SPACING.lg,
-    borderRadius: moderateScale(16),
+    padding: SPACING.md,
+    borderRadius: moderateScale(12),
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
       },
       android: {
-        elevation: 4,
+        elevation: 2,
       },
     }),
   },
   balanceHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.md,
   },
   balanceTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   balanceIcon: {
-    marginRight: SPACING.xs,
-  },
-  balanceIndicator: {
-    padding: SPACING.xs,
-    borderRadius: moderateScale(6),
-    aspectRatio: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    marginLeft: SPACING.xs,
   },
   balanceContent: {
-    alignItems: 'center',
-  },
-  balanceDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    alignItems: 'flex-start',
     width: '100%',
-    marginTop: SPACING.md,
-    paddingTop: SPACING.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
   balanceDetailItem: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: SPACING.xs,
   },
-  detailIcon: {
-    marginTop: 2,
-  },
   cardLoader: {
     height: 30,
     marginTop: SPACING.xs,
+    alignSelf: 'flex-start',
   },
   errorContainer: {
     padding: SPACING.lg,
-    alignItems: 'center',
+    alignItems: 'flex-start',
+  },
+  separator: {
+    height: 3,
+    marginHorizontal: SPACING.lg,
+    opacity: 0.3,
   },
 }); 

@@ -25,7 +25,6 @@ export default function SelectDebtTarget({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Carregar amigos quando a tela receber foco
   useFocusEffect(
     React.useCallback(() => {
       const loadFriends = async () => {

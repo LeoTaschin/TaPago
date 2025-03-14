@@ -32,15 +32,10 @@ export default function NewCharge() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    console.log('NewCharge useEffect - user:', user?.uid);
-    console.log('NewCharge useEffect - selectedTarget:', selectedTarget);
-
     if (!selectedTarget?.id) {
-      console.log('NewCharge - Nenhum amigo selecionado, voltando');
-      console.log('NewCharge - route.params:', route.params);
       navigation.goBack();
     }
-  }, [selectedTarget, navigation, route.params]);
+  }, [selectedTarget, navigation]);
 
   const handleClose = () => {
     navigation.goBack();
@@ -76,12 +71,6 @@ export default function NewCharge() {
     }
 
     try {
-      console.log('Iniciando criação de dívida:', {
-        debtorId: selectedTarget.id,
-        amount: parseFloat(amount),
-        description
-      });
-
       setSubmitting(true);
       const result = await addDebt(selectedTarget.id, parseFloat(amount), description.trim());
       
@@ -113,81 +102,83 @@ export default function NewCharge() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={[styles.container, { backgroundColor: colors.background }]}
     >
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleClose}>
-          <Ionicons name="close" size={moderateScale(24)} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={[textStyles.h3, { color: colors.text }]}>Nova Cobrança</Text>
-        <TouchableOpacity 
-          onPress={handleCreate}
-          disabled={submitting || loading}
-          style={[
-            styles.createButton,
-            { opacity: submitting || loading ? 0.7 : 1 }
-          ]}
-        >
-          {submitting || loading ? (
-            <ActivityIndicator size="small" color={colors.text} />
-          ) : (
-            <Text style={[textStyles.button, { color: colors.text }]}>Criar</Text>
-          )}
-        </TouchableOpacity>
-      </View>
+      <View style={styles.content}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleClose}>
+            <Ionicons name="close" size={moderateScale(24)} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={[textStyles.h3, { color: colors.text }]}>Nova Cobrança</Text>
+          <TouchableOpacity 
+            onPress={handleCreate}
+            disabled={submitting || loading}
+            style={[
+              styles.createButton,
+              { opacity: submitting || loading ? 0.7 : 1 }
+            ]}
+          >
+            {submitting || loading ? (
+              <ActivityIndicator size="small" color={colors.text} />
+            ) : (
+              <Text style={[textStyles.button, { color: colors.text }]}>Criar</Text>
+            )}
+          </TouchableOpacity>
+        </View>
 
-      <ScrollView style={styles.content}>
-        <View style={[styles.targetInfo, { backgroundColor: colors.cardBackground }]}>
-          <Image
-            source={{ uri: selectedTarget?.photoURL || 'https://via.placeholder.com/40' }}
-            style={styles.avatar}
-          />
-          <View style={styles.targetDetails}>
-            <Text style={[textStyles.h3, { color: colors.text }]}>
-              {selectedTarget?.username}
-            </Text>
-            <Text style={[textStyles.caption, { color: colors.textSecondary }]}>
-              {selectedTarget?.email}
-            </Text>
+        <ScrollView style={styles.scrollContent}>
+          <View style={[styles.targetInfo, { backgroundColor: colors.cardBackground }]}>
+            <Image
+              source={{ uri: selectedTarget?.photoURL || 'https://via.placeholder.com/40' }}
+              style={styles.avatar}
+            />
+            <View style={styles.targetDetails}>
+              <Text style={[textStyles.h3, { color: colors.text }]}>
+                {selectedTarget?.username}
+              </Text>
+              <Text style={[textStyles.caption, { color: colors.textSecondary }]}>
+                {selectedTarget?.email}
+              </Text>
+            </View>
           </View>
-        </View>
 
-        <View style={styles.inputContainer}>
-          <Text style={[textStyles.label, { color: colors.text }]}>Descrição</Text>
-          <TextInput
-            style={[
-              styles.input,
-              { 
-                backgroundColor: colors.cardBackground,
-                color: colors.text,
-                borderColor: colors.border
-              }
-            ]}
-            placeholder="Ex: Almoço, Cinema, etc..."
-            placeholderTextColor={colors.textSecondary}
-            value={description}
-            onChangeText={setDescription}
-            multiline
-          />
-        </View>
+          <View style={styles.inputContainer}>
+            <Text style={[textStyles.label, { color: colors.text }]}>Descrição</Text>
+            <TextInput
+              style={[
+                styles.input,
+                { 
+                  backgroundColor: colors.cardBackground,
+                  color: colors.text,
+                  borderColor: colors.border
+                }
+              ]}
+              placeholder="Ex: Almoço, Cinema, etc..."
+              placeholderTextColor={colors.textSecondary}
+              value={description}
+              onChangeText={setDescription}
+              multiline
+            />
+          </View>
 
-        <View style={styles.inputContainer}>
-          <Text style={[textStyles.label, { color: colors.text }]}>Valor Total</Text>
-          <TextInput
-            style={[
-              styles.input,
-              { 
-                backgroundColor: colors.cardBackground,
-                color: colors.text,
-                borderColor: colors.border
-              }
-            ]}
-            placeholder="R$ 0,00"
-            placeholderTextColor={colors.textSecondary}
-            value={amount ? formatCurrency(amount) : ''}
-            onChangeText={handleAmountChange}
-            keyboardType="numeric"
-          />
-        </View>
-      </ScrollView>
+          <View style={styles.inputContainer}>
+            <Text style={[textStyles.label, { color: colors.text }]}>Valor Total</Text>
+            <TextInput
+              style={[
+                styles.input,
+                { 
+                  backgroundColor: colors.cardBackground,
+                  color: colors.text,
+                  borderColor: colors.border
+                }
+              ]}
+              placeholder="R$ 0,00"
+              placeholderTextColor={colors.textSecondary}
+              value={amount ? formatCurrency(amount) : ''}
+              onChangeText={handleAmountChange}
+              keyboardType="numeric"
+            />
+          </View>
+        </ScrollView>
+      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -195,8 +186,14 @@ export default function NewCharge() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  },
+  content: {
+    flex: 1,
+    width: '100%',
+  },
+  scrollContent: {
+    flex: 1,
+    padding: SPACING.lg,
   },
   header: {
     flexDirection: 'row',
@@ -209,10 +206,6 @@ const styles = StyleSheet.create({
   createButton: {
     minWidth: moderateScale(60),
     alignItems: 'center',
-  },
-  content: {
-    flex: 1,
-    padding: SPACING.lg,
   },
   targetInfo: {
     flexDirection: 'row',
