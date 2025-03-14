@@ -15,6 +15,7 @@ import { SelectionToolbar } from '../components/SelectionToolbar';
 import { Ionicons } from '@expo/vector-icons';
 import { SPACING, moderateScale } from '../utils/dimensions';
 import { getUserFriends } from '../services/userService';
+import { auth } from '../firebase/firebaseConfig';
 
 export default function SelectDebtTarget({ navigation }) {
   const { colors, textStyles } = useTheme();
@@ -25,17 +26,34 @@ export default function SelectDebtTarget({ navigation }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    console.log('SelectDebtTarget - useEffect - user:', user?.uid);
+    console.log('SelectDebtTarget - useEffect - auth.currentUser:', auth.currentUser?.uid);
+
+    if (!user) {
+      console.log('SelectDebtTarget - useEffect - Usuário não autenticado');
+      setLoading(false);
+      setError('Usuário não autenticado');
+      return;
+    }
+
     loadFriends();
-  }, []);
+  }, [user]);
 
   const loadFriends = async () => {
+    if (!user?.uid) {
+      console.log('SelectDebtTarget - loadFriends - Usuário não autenticado');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
+      console.log('SelectDebtTarget - loadFriends - Buscando amigos para:', user.uid);
       const friendsList = await getUserFriends(user.uid);
+      console.log('SelectDebtTarget - loadFriends - Lista de amigos:', friendsList);
       setFriends(friendsList);
     } catch (err) {
-      console.error('Error loading friends:', err);
+      console.error('SelectDebtTarget - loadFriends - Erro:', err);
       setError('Não foi possível carregar seus amigos. Por favor, tente novamente.');
       setFriends([]);
     } finally {
@@ -48,36 +66,66 @@ export default function SelectDebtTarget({ navigation }) {
   };
 
   const handleSelectTarget = (target) => {
-    navigation.navigate('NewCharge', {
-      selectedTarget: target,
+    console.log('SelectDebtTarget - Iniciando navegação para NewCharge');
+    console.log('SelectDebtTarget - Amigo selecionado:', target);
+    console.log('SelectDebtTarget - Tipo:', activeTab);
+
+    if (!target?.id) {
+      console.error('SelectDebtTarget - Erro: amigo sem ID');
+      return;
+    }
+
+    // Garantir que o amigo tem todos os campos necessários
+    const selectedTarget = {
+      id: target.id,
+      username: target.username || '',
+      email: target.email || '',
+      photoURL: target.photoURL || null
+    };
+
+    const params = {
+      selectedTarget,
       type: activeTab
-    });
+    };
+
+    console.log('SelectDebtTarget - Parâmetros de navegação:', params);
+    
+    // Usar setTimeout para garantir que a navegação aconteça no próximo ciclo
+    setTimeout(() => {
+      navigation.navigate('NewCharge', params);
+    }, 0);
   };
 
-  const renderFriendItem = ({ item }) => (
-    <TouchableOpacity
-      style={[styles.itemContainer, { backgroundColor: colors.cardBackground }]}
-      onPress={() => handleSelectTarget(item)}
-    >
-      <Image
-        source={{ uri: item.photoURL || 'https://via.placeholder.com/40' }}
-        style={styles.avatar}
-      />
-      <View style={styles.itemInfo}>
-        <Text style={[textStyles.body, { color: colors.text }]}>
-          {item.username}
-        </Text>
-        <Text style={[textStyles.caption, { color: colors.textSecondary }]}>
-          {item.email}
-        </Text>
-      </View>
-      <Ionicons 
-        name="chevron-forward" 
-        size={moderateScale(20)} 
-        color={colors.textSecondary} 
-      />
-    </TouchableOpacity>
-  );
+  const renderFriendItem = ({ item }) => {
+    console.log('Renderizando amigo:', item);
+    return (
+      <TouchableOpacity
+        style={[styles.itemContainer, { backgroundColor: colors.cardBackground }]}
+        onPress={() => {
+          console.log('Clique no amigo:', item);
+          handleSelectTarget(item);
+        }}
+      >
+        <Image
+          source={{ uri: item.photoURL || 'https://via.placeholder.com/40' }}
+          style={styles.avatar}
+        />
+        <View style={styles.itemInfo}>
+          <Text style={[textStyles.body, { color: colors.text }]}>
+            {item.username}
+          </Text>
+          <Text style={[textStyles.caption, { color: colors.textSecondary }]}>
+            {item.email}
+          </Text>
+        </View>
+        <Ionicons 
+          name="chevron-forward" 
+          size={moderateScale(20)} 
+          color={colors.textSecondary} 
+        />
+      </TouchableOpacity>
+    );
+  };
 
   const renderContent = () => {
     if (loading) {
@@ -136,7 +184,7 @@ export default function SelectDebtTarget({ navigation }) {
       <FlatList
         data={friends}
         renderItem={renderFriendItem}
-        keyExtractor={item => item.uid}
+        keyExtractor={item => item.id}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
       />

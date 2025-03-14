@@ -2,49 +2,9 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Funções auxiliares
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-
-    function isUserAuthenticated(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
-
-    function isInvolvedInDebt(debt) {
-      return isAuthenticated() && (
-        request.auth.uid == debt.creditorId || 
-        request.auth.uid == debt.debtorId
-      );
-    }
-
-    // Regras para usuários
-    match /users/{userId} {
-      // Qualquer usuário autenticado pode ler dados de outros usuários
-      allow read: if isAuthenticated();
-      
-      // Permitir atualização se o usuário for o próprio ou estiver envolvido em uma transação de dívida
-      allow create, update: if isAuthenticated() && (
-        request.auth.uid == userId || 
-        (request.resource.data.debtsAsCreditor != null && request.auth.uid == userId) ||
-        (request.resource.data.debtsAsDebtor != null)
-      );
-      
-      allow delete: if false; // Não permite deletar usuários
-    }
-
-    // Regras para dívidas
-    match /debts/{debtId} {
-      // Permitir leitura para usuários autenticados
-      allow read: if isAuthenticated();
-      
-      // Permitir criação para qualquer usuário autenticado
-      allow create: if isAuthenticated();
-      
-      // Permitir atualização se o usuário for parte da dívida
-      allow update: if isAuthenticated() && isInvolvedInDebt(resource.data);
-      
-      allow delete: if false; // Não permite deletar dívidas
+    // Regra temporária para debug - REMOVER ANTES DE PRODUÇÃO
+    match /{document=**} {
+      allow read, write: if request.auth != null;
     }
   }
 } 

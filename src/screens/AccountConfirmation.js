@@ -8,6 +8,8 @@ import { Logo } from '../components/Logo';
 import { doc, getDoc } from 'firebase/firestore';
 import { SPACING, moderateScale } from '../utils/dimensions';
 
+const { height } = Dimensions.get('window');
+
 export default function AccountConfirmation({ navigation }) {
   const { colors, textStyles } = useTheme();
   const [username, setUsername] = useState('');
@@ -57,7 +59,7 @@ export default function AccountConfirmation({ navigation }) {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.logoContainer}>
-        <Logo size={40} />
+      <Logo size={height * 0.1} />
       </View>
       
       <View style={styles.content}>
@@ -103,9 +105,8 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    height: moderateScale(44),
+    minHeight: height * 0.15, // 15% da altura da tela
     justifyContent: 'center',
-    paddingTop: SPACING.md,
   },
   content: {
     flex: 1,

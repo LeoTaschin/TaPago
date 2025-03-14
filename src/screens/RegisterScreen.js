@@ -261,8 +261,7 @@ export default function RegisterScreen() {
     },
     logoContainer: {
       alignItems: 'center',
-      marginBottom: SPACING * 2,
-      height: 120,
+      minHeight: height * 0.15, // 15% da altura da tela
       justifyContent: 'center',
     },
     mainContent: {
@@ -353,7 +352,7 @@ export default function RegisterScreen() {
         >
           <View style={styles.content}>
             <View style={styles.logoContainer}>
-              <Logo size={80} />
+              <Logo size={height * 0.1} />
             </View>
 
             <View style={styles.mainContent}>

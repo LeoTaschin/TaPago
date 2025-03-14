@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { 
   createDebt, 
   getDebtsAsCreditor, 
@@ -7,8 +7,9 @@ import {
   updateUserTotals 
 } from '../services/debtService';
 import { getUserData } from '../services/userService';
+import { auth } from '../config/firebase';
 
-export function useDebts(userId) {
+export function useDebts() {
   const [debtsAsCreditor, setDebtsAsCreditor] = useState([]);
   const [debtsAsDebtor, setDebtsAsDebtor] = useState([]);
   const [userTotals, setUserTotals] = useState({ totalToReceive: 0, totalToPay: 0 });
@@ -17,15 +18,22 @@ export function useDebts(userId) {
 
   // Buscar todas as dívidas do usuário
   const fetchDebts = useCallback(async () => {
-    if (!userId) return;
+    const currentUser = auth.currentUser;
+    if (!currentUser?.uid) {
+      console.error('useDebts: Usuário não autenticado');
+      setError('Usuário não autenticado');
+      return;
+    }
 
-    setLoading(true);
-    setError(null);
     try {
-      // Buscar dívidas em paralelo
+      setLoading(true);
+      setError(null);
+
+      console.log('Buscando dívidas para usuário:', currentUser.uid);
+
       const [creditorDebts, debtorDebts] = await Promise.all([
-        getDebtsAsCreditor(userId),
-        getDebtsAsDebtor(userId)
+        getDebtsAsCreditor(currentUser.uid),
+        getDebtsAsDebtor(currentUser.uid)
       ]);
 
       // Buscar dados dos usuários envolvidos nas dívidas
@@ -39,7 +47,7 @@ export function useDebts(userId) {
 
       const usersMap = {};
       usersData.forEach(user => {
-        usersMap[user.uid] = user;
+        if (user) usersMap[user.uid] = user;
       });
 
       // Adicionar dados dos usuários às dívidas
@@ -57,38 +65,59 @@ export function useDebts(userId) {
       setDebtsAsDebtor(enrichedDebtorDebts);
 
       // Atualizar totais
-      const totals = await updateUserTotals(userId);
+      const totals = await updateUserTotals(currentUser.uid);
       setUserTotals(totals);
+
     } catch (err) {
-      console.error('Error fetching debts:', err);
+      console.error('Erro ao buscar dívidas:', err);
       setError('Não foi possível carregar as dívidas');
     } finally {
       setLoading(false);
     }
-  }, [userId]);
+  }, []); // Removida a dependência de userId
 
   // Criar uma nova dívida
-  const addDebt = useCallback(async (debtorId, amount, description) => {
-    if (!userId || !debtorId || !amount) return;
+  const addDebt = async (debtorId, amount, description) => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      console.error('useDebts: Usuário não autenticado');
+      throw new Error('Usuário não autenticado');
+    }
 
-    setLoading(true);
-    setError(null);
     try {
-      await createDebt(userId, debtorId, amount, description);
-      await fetchDebts(); // Recarregar dívidas após criar uma nova
-      return { success: true };
+      setLoading(true);
+      setError(null);
+
+      console.log('Iniciando criação de dívida:', {
+        creditorId: currentUser.uid,
+        debtorId,
+        amount,
+        description
+      });
+
+      const result = await createDebt(currentUser.uid, debtorId, amount, description);
+      
+      if (result.success) {
+        await fetchDebts(); // Recarregar dívidas após criar nova
+      }
+
+      return result;
     } catch (err) {
-      console.error('Error creating debt:', err);
+      console.error('Erro ao criar dívida:', err);
       setError('Não foi possível criar a dívida');
-      return { success: false, error: err.message };
+      throw err;
     } finally {
       setLoading(false);
     }
-  }, [userId, fetchDebts]);
+  };
 
   // Marcar uma dívida como paga
   const payDebt = useCallback(async (debtId) => {
-    if (!userId || !debtId) return;
+    const currentUser = auth.currentUser;
+    if (!currentUser?.uid || !debtId) {
+      console.error('useDebts: Usuário não autenticado ou debtId não fornecido');
+      return { success: false, error: 'Usuário não autenticado ou debtId não fornecido' };
+    }
 
     setLoading(true);
     setError(null);
@@ -103,7 +132,24 @@ export function useDebts(userId) {
     } finally {
       setLoading(false);
     }
-  }, [userId, fetchDebts]);
+  }, [fetchDebts]);
+
+  // Carregar dívidas quando o usuário estiver autenticado
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        console.log('Usuário autenticado, carregando dívidas:', user.uid);
+        fetchDebts();
+      } else {
+        console.log('Usuário não autenticado, limpando dívidas');
+        setDebtsAsCreditor([]);
+        setDebtsAsDebtor([]);
+        setUserTotals({ totalToReceive: 0, totalToPay: 0 });
+      }
+    });
+
+    return () => unsubscribe();
+  }, [fetchDebts]);
 
   return {
     debtsAsCreditor,    // Dívidas onde o usuário é credor

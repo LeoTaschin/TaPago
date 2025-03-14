@@ -25,7 +25,7 @@ export default function SplashScreen({ navigation }) {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
-        <Logo size={120} />
+        <Logo size={height * 0.15} />
       </Animated.View>
     </View>
   );

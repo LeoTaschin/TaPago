@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { auth } from '../config/firebase';
-import { onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut as firebaseSignOut } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { initializeUser } from '../services/userService';
 
@@ -13,6 +13,7 @@ export function useAuth() {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log('Auth state changed:', user?.uid);
       if (user) {
         // Usuário está autenticado
         const userData = {
@@ -66,10 +67,22 @@ export function useAuth() {
     }
   };
 
+  const signOut = async () => {
+    try {
+      await firebaseSignOut(auth);
+      await AsyncStorage.removeItem(USER_STORAGE_KEY);
+      await AsyncStorage.removeItem(AUTH_CREDENTIALS_KEY);
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+      throw error;
+    }
+  };
+
   return {
     user,
     loading,
     saveCredentials,
     reauthorizeUser,
+    signOut,
   };
 } 

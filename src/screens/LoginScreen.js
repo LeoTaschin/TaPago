@@ -62,7 +62,7 @@ export default function LoginScreen({ navigation }) {
       // Primeiro fazemos a navegação
       navigation.reset({
         index: 0,
-        routes: [{ name: 'AccountConfirmation' }],
+        routes: [{ name: 'Home' }],
       });
       
       // Depois salvamos as credenciais em background
@@ -142,7 +142,7 @@ export default function LoginScreen({ navigation }) {
         >
           <View style={styles.content}>
             <View style={styles.logoContainer}>
-              <Logo/>
+              <Logo size={height * 0.1} />
             </View>
 
             <View style={styles.mainContent}>
@@ -255,8 +255,8 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: SPACING * 2,
-    height: 120,
+    marginVertical: height * 0.05, // 5% da altura da tela
+    minHeight: height * 0.15, // 15% da altura da tela
     justifyContent: 'center',
   },
   mainContent: {

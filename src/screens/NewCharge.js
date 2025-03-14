@@ -17,85 +17,112 @@ import { SPACING, moderateScale } from '../utils/dimensions';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../hooks/useAuth';
 import { useDebts } from '../hooks/useDebts';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { formatCurrency } from '../utils/formatters';
 
-export default function NewCharge({ navigation, route }) {
+export default function NewCharge() {
   const { colors, textStyles } = useTheme();
   const { user } = useAuth();
-  const { addDebt, loading } = useDebts(user?.uid);
+  const { addDebt, loading, error } = useDebts();
+  const navigation = useNavigation();
+  const route = useRoute();
+  const selectedTarget = route.params?.selectedTarget;
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
-  const selectedTarget = route.params?.selectedTarget;
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!selectedTarget) {
-      navigation.goBack();
-    }
-  }, [selectedTarget]);
+    console.log('NewCharge useEffect - user:', user?.uid);
+    console.log('NewCharge useEffect - selectedTarget:', selectedTarget);
+
+    const checkAuth = async () => {
+      if (!user) {
+        console.log('NewCharge - Usuário não autenticado, redirecionando para Login');
+        navigation.replace('Login');
+        return;
+      }
+      
+      // Aguarda um pequeno delay para garantir que os parâmetros foram recebidos
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      if (!selectedTarget?.id) {
+        console.log('NewCharge - Nenhum amigo selecionado, voltando');
+        console.log('NewCharge - route.params:', route.params);
+        navigation.goBack();
+        return;
+      }
+
+      console.log('NewCharge - Tudo ok, exibindo tela');
+    };
+
+    checkAuth();
+  }, [user, selectedTarget, navigation, route.params]);
 
   const handleClose = () => {
     navigation.goBack();
   };
 
-  const handleCreate = async () => {
-    if (!description.trim()) {
-      Alert.alert('Erro', 'Por favor, adicione uma descrição para a cobrança.');
+  const handleAmountChange = (text) => {
+    // Remove tudo exceto números e ponto
+    const numericValue = text.replace(/[^0-9.]/g, '');
+    
+    // Garante que só há um ponto decimal
+    const parts = numericValue.split('.');
+    if (parts.length > 2) {
+      return;
+    }
+    
+    // Limita casas decimais a 2
+    if (parts[1] && parts[1].length > 2) {
       return;
     }
 
-    const numericAmount = parseFloat(amount.replace('R$', '').replace(',', '.').trim());
-    if (isNaN(numericAmount) || numericAmount <= 0) {
-      Alert.alert('Erro', 'Por favor, adicione um valor válido.');
+    setAmount(numericValue);
+  };
+
+  const handleCreate = async () => {
+    if (!description.trim()) {
+      Alert.alert('Erro', 'Por favor, insira uma descrição');
+      return;
+    }
+
+    if (!amount || parseFloat(amount) <= 0) {
+      Alert.alert('Erro', 'Por favor, insira um valor válido');
       return;
     }
 
     try {
-      const result = await addDebt(selectedTarget.uid, numericAmount, description);
+      console.log('Iniciando criação de dívida:', {
+        debtorId: selectedTarget.id,
+        amount: parseFloat(amount),
+        description
+      });
 
-      if (!result.success) {
-        Alert.alert('Erro', 'Não foi possível criar a cobrança. Por favor, tente novamente.');
-        return;
+      setSubmitting(true);
+      const result = await addDebt(selectedTarget.id, parseFloat(amount), description.trim());
+      
+      if (result.success) {
+        Alert.alert('Sucesso', 'Cobrança criada com sucesso', [
+          { text: 'OK', onPress: () => navigation.goBack() }
+        ]);
+      } else {
+        throw new Error(result.error || 'Erro ao criar cobrança');
       }
-
-      Alert.alert('Sucesso', 'Cobrança criada com sucesso!', [
-        { text: 'OK', onPress: () => navigation.navigate('Home') }
-      ]);
-    } catch (error) {
-      console.error('Error creating charge:', error);
-      Alert.alert('Erro', 'Não foi possível criar a cobrança. Por favor, tente novamente.');
+    } catch (err) {
+      console.error('Erro ao criar cobrança:', err);
+      Alert.alert('Erro', err.message || 'Não foi possível criar a cobrança');
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const formatCurrency = (text) => {
-    // Remove tudo exceto números
-    const numbers = text.replace(/\D/g, '');
-    
-    // Se não houver números, retorna vazio
-    if (numbers === '') return '';
-    
-    // Converte para centavos
-    const cents = parseInt(numbers);
-    
-    // Formata o número
-    const formatted = (cents / 100).toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      minimumFractionDigits: 2,
-    });
-    
-    return formatted;
-  };
-
-  const handleAmountChange = (text) => {
-    // Se o usuário apagou tudo, limpa o campo
-    if (!text) {
-      setAmount('');
-      return;
-    }
-
-    // Formata o valor
-    const formatted = formatCurrency(text);
-    setAmount(formatted);
-  };
+  if (!user || !selectedTarget) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView 
@@ -109,13 +136,13 @@ export default function NewCharge({ navigation, route }) {
         <Text style={[textStyles.h2, { color: colors.text }]}>Nova Cobrança</Text>
         <TouchableOpacity 
           onPress={handleCreate}
-          disabled={loading}
+          disabled={submitting || loading}
           style={[
             styles.createButton,
-            { opacity: loading ? 0.7 : 1 }
+            { opacity: submitting || loading ? 0.7 : 1 }
           ]}
         >
-          {loading ? (
+          {submitting || loading ? (
             <ActivityIndicator size="small" color={colors.text} />
           ) : (
             <Text style={[textStyles.button, { color: colors.text }]}>Criar</Text>
@@ -154,6 +181,7 @@ export default function NewCharge({ navigation, route }) {
             placeholderTextColor={colors.textSecondary}
             value={description}
             onChangeText={setDescription}
+            multiline
           />
         </View>
 
@@ -170,7 +198,7 @@ export default function NewCharge({ navigation, route }) {
             ]}
             placeholder="R$ 0,00"
             placeholderTextColor={colors.textSecondary}
-            value={amount}
+            value={amount ? formatCurrency(amount) : ''}
             onChangeText={handleAmountChange}
             keyboardType="numeric"
           />
@@ -183,6 +211,8 @@ export default function NewCharge({ navigation, route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
     flexDirection: 'row',

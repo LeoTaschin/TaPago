@@ -1,7 +1,10 @@
 // Imagens
+const logoPequena = require('./images/logoPequena.png');
+const welcome = require('./images/welcomeIMG1.png');
+
 export const images = {
-  welcome: require('./images/welcomeIMG1.png'),
-  logoPequena: require('./images/logoPequena.png'),
+  welcome,
+  logoPequena,
 };
 
 // Ícones

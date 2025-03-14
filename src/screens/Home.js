@@ -16,8 +16,6 @@ import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../hooks/useAuth';
 import { useDebts } from '../hooks/useDebts';
 import { BottomToolbar } from '../components/BottomToolbar';
-import { auth } from '../config/firebase';
-import { signOut } from 'firebase/auth';
 import { Ionicons } from '@expo/vector-icons';
 import { Logo } from '../components/Logo';
 import { MainTabs } from '../components/MainTabs';
@@ -25,7 +23,7 @@ import { SPACING, moderateScale } from '../utils/dimensions';
 
 export default function HomeScreen({ navigation }) {
   const { colors, textStyles } = useTheme();
-  const { user, signOut: signOutAuth } = useAuth();
+  const { user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState('friends');
   const { 
     debtsAsCreditor, 
@@ -37,11 +35,18 @@ export default function HomeScreen({ navigation }) {
   } = useDebts(user?.uid);
 
   useEffect(() => {
+    console.log('Home - useEffect - user:', user?.uid);
     fetchDebts();
   }, [fetchDebts]);
 
   const handleTabChange = (tab) => {
     if (tab === 'new') {
+      if (!user) {
+        console.log('Home - handleTabChange - Usuário não autenticado');
+        navigation.navigate('Login');
+        return;
+      }
+      console.log('Home - handleTabChange - Navegando para SelectDebtTarget');
       navigation.navigate('SelectDebtTarget');
       return;
     }
@@ -63,7 +68,7 @@ export default function HomeScreen({ navigation }) {
             style: 'destructive',
             onPress: async () => {
               try {
-                await signOut(auth);
+                await signOut();
                 navigation.reset({
                   index: 0,
                   routes: [{ name: 'Login' }],

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { 
   StyleSheet, 
   View, 
-  SafeAreaView, 
   TextInput, 
   Text, 
   KeyboardAvoidingView, 
@@ -155,14 +154,14 @@ export default function ForgotPasswordScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
         <View style={styles.content}>
           <View style={styles.logoContainer}>
-            <Logo size={80} />
+            <Logo size={height * 0.1} />
           </View>
 
           <View style={styles.mainContent}>
@@ -220,25 +219,29 @@ export default function ForgotPasswordScreen() {
           </View>
         </View>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: Platform.OS === 'ios' ? 50 : 25,
+    backgroundColor: colors.background,
   },
   keyboardView: {
     flex: 1,
   },
   content: {
     flex: 1,
-    padding: 20,
+    padding: SPACING,
+    paddingTop: 0,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: SPACING * 2,
-    height: 120,
+    marginTop: height * 0.02,
+    marginBottom: height * 0.03,
+    minHeight: height * 0.12,
     justifyContent: 'center',
   },
   mainContent: {

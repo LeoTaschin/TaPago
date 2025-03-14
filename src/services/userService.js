@@ -98,10 +98,15 @@ export const getUserFriends = async (userId) => {
     const friendsQuery = query(usersRef, where('uid', 'in', friendsList));
     const friendsSnapshot = await getDocs(friendsQuery);
 
-    return friendsSnapshot.docs.map(doc => ({
-      id: doc.data().uid,
-      ...doc.data()
-    }));
+    return friendsSnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: data.uid,
+        username: data.username,
+        email: data.email,
+        photoURL: data.photoURL
+      };
+    });
   } catch (error) {
     console.error('Error fetching friends:', error);
     throw error;
