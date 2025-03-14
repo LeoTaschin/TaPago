@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { auth } from '../config/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { initializeUser } from '../services/userService';
 
 const USER_STORAGE_KEY = '@user_data';
 const AUTH_CREDENTIALS_KEY = '@auth_credentials';
@@ -20,8 +21,18 @@ export function useAuth() {
           displayName: user.displayName,
           photoURL: user.photoURL,
         };
-        setUser(userData);
-        await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
+
+        try {
+          // Inicializar ou atualizar dados do usuário no Firestore
+          await initializeUser(userData);
+          setUser(userData);
+          await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
+        } catch (error) {
+          console.error('Erro ao inicializar usuário:', error);
+          // Mesmo com erro na inicialização, mantemos o usuário logado
+          setUser(userData);
+          await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
+        }
       } else {
         // Usuário não está autenticado
         setUser(null);
