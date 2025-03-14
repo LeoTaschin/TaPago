@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
+import { SPACING, moderateScale } from '../utils/dimensions';
 
 export const Button = ({ 
   onPress, 
@@ -46,7 +47,7 @@ export const Button = ({
 
     if (variant === 'outline') {
       baseStyle.push({
-        borderWidth: 2,
+        borderWidth: moderateScale(2),
         borderColor: disabled ? colors.gray[300] : colors.primary,
       });
     }
@@ -91,21 +92,21 @@ export const Button = ({
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 8,
+    borderRadius: moderateScale(8),
     justifyContent: 'center',
     alignItems: 'center',
   },
   largeButton: {
-    height: 56,
-    paddingHorizontal: 32,
+    height: moderateScale(56),
+    paddingHorizontal: SPACING.xl,
   },
   mediumButton: {
-    height: 48,
-    paddingHorizontal: 24,
+    height: moderateScale(48),
+    paddingHorizontal: SPACING.lg,
   },
   smallButton: {
-    height: 40,
-    paddingHorizontal: 16,
+    height: moderateScale(40),
+    paddingHorizontal: SPACING.md,
   },
   text: {
     textAlign: 'center',

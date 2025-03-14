@@ -1,60 +1,81 @@
-import React from 'react';
-import { View, useWindowDimensions, StyleSheet } from 'react-native';
-import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
-import { useTheme } from '../context/ThemeContext';
+import React, { useRef, useEffect } from 'react';
+import { View, StyleSheet, Animated, Dimensions } from 'react-native';
 import { Friends } from '../screens/Friends';
 import { Groups } from '../screens/Groups';
+import { useTheme } from '../context/ThemeContext';
 
-export function MainTabs({ activeTab, onTabChange }) {
+const { width } = Dimensions.get('window');
+
+export function MainTabs({ activeTab }) {
   const { colors } = useTheme();
-  const layout = useWindowDimensions();
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const prevTabRef = useRef(activeTab);
 
-  const [routes] = React.useState([
-    { key: 'friends', title: '' },
-    { key: 'groups', title: '' },
-    { key: 'activity', title: '' },
-  ]);
+  useEffect(() => {
+    // Determine direction of animation based on tab order
+    const tabOrder = ['friends', 'groups', 'activity'];
+    const prevIndex = tabOrder.indexOf(prevTabRef.current);
+    const currentIndex = tabOrder.indexOf(activeTab);
+    const direction = prevIndex < currentIndex ? 1 : -1;
 
-  const index = routes.findIndex(route => route.key === activeTab);
+    // Reset position if going right
+    if (direction === 1) {
+      slideAnim.setValue(width);
+    } else {
+      slideAnim.setValue(-width);
+    }
 
-  const renderScene = SceneMap({
-    friends: Friends,
-    groups: Groups,
-    activity: () => (
-      <View style={{ flex: 1, backgroundColor: colors.background }}>
-        {/* Placeholder para a tela de Atividade */}
-      </View>
-    ),
-  });
+    // Animate to center
+    Animated.spring(slideAnim, {
+      toValue: 0,
+      useNativeDriver: true,
+      tension: 50,
+      friction: 7,
+    }).start();
 
-  const renderTabBar = props => (
-    <TabBar
-      {...props}
-      indicatorStyle={{ height: 0 }}
-      style={{ height: 0 }}
-      labelStyle={{ display: 'none' }}
-      activeColor={colors.primary}
-      inactiveColor={colors.subText}
-      pressColor={colors.primary + '20'}
-    />
-  );
+    prevTabRef.current = activeTab;
+  }, [activeTab]);
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'friends':
+        return <Friends />;
+      case 'groups':
+        return <Groups />;
+      case 'activity':
+        return (
+          <View style={[styles.container, { backgroundColor: colors.background }]}>
+            {/* Placeholder para a tela de Atividade */}
+          </View>
+        );
+      default:
+        return <Friends />;
+    }
+  };
 
   return (
-    <TabView
-      navigationState={{ index, routes }}
-      renderScene={renderScene}
-      onIndexChange={(index) => onTabChange(routes[index].key)}
-      initialLayout={{ width: layout.width }}
-      renderTabBar={renderTabBar}
-      style={styles.container}
-      swipeEnabled={true}
-      animationEnabled={true}
-    />
+    <View style={styles.container}>
+      <Animated.View 
+        style={[
+          styles.animatedContainer,
+          {
+            transform: [{ translateX: slideAnim }],
+          }
+        ]}
+      >
+        {renderContent()}
+      </Animated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    overflow: 'hidden',
+  },
+  animatedContainer: {
+    flex: 1,
+    width: '100%',
   },
 }); 

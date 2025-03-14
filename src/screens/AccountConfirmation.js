@@ -6,9 +6,7 @@ import { auth, db } from '../config/firebase';
 import { signOut } from 'firebase/auth';
 import { Logo } from '../components/Logo';
 import { doc, getDoc } from 'firebase/firestore';
-
-const SPACING = 20;
-const { height } = Dimensions.get('window');
+import { SPACING, moderateScale } from '../utils/dimensions';
 
 export default function AccountConfirmation({ navigation }) {
   const { colors, textStyles } = useTheme();
@@ -59,7 +57,7 @@ export default function AccountConfirmation({ navigation }) {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.logoContainer}>
-        <Logo />
+        <Logo size={40} />
       </View>
       
       <View style={styles.content}>
@@ -67,7 +65,7 @@ export default function AccountConfirmation({ navigation }) {
           <Text style={[textStyles.h3, { color: colors.text }]}>
             Bem-vindo ao TaPago!
           </Text>
-          <Text style={[textStyles.subText, { color: colors.text, textAlign: 'center', marginTop: SPACING }]}>
+          <Text style={[textStyles.subText, { color: colors.text, textAlign: 'center', marginTop: SPACING.sm }]}>
             Divida contas e faça pagamentos com amigos de forma simples.
           </Text>
         </View>
@@ -77,10 +75,10 @@ export default function AccountConfirmation({ navigation }) {
             source={{ uri: userProfilePic }} 
             style={[styles.profilePic, { borderColor: colors.primary }]} 
           />
-          <Text style={[textStyles.body, { color: colors.text, marginTop: SPACING }]}>
+          <Text style={[textStyles.body, { color: colors.text, marginTop: SPACING.sm }]}>
             Olá, {username || 'Usuário'}
           </Text>
-          <Text style={[textStyles.bodySmall, { color: colors.primary, marginTop: SPACING }]}>
+          <Text style={[textStyles.bodySmall, { color: colors.primary, marginTop: SPACING.xs }]}>
             Comece a usar o TaPago agora!
           </Text>
         </View>
@@ -102,38 +100,38 @@ export default function AccountConfirmation({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: SPACING * 2,
-    height: 120,
+    height: moderateScale(44),
     justifyContent: 'center',
+    paddingTop: SPACING.md,
   },
   content: {
-    height: height * 0.85,
-    paddingHorizontal: SPACING,
+    flex: 1,
+    paddingHorizontal: SPACING.md,
+    justifyContent: 'center',
   },
   welcomeContainer: {
-    height: height * 0.25,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: SPACING,
+    paddingHorizontal: SPACING.sm,
+    marginBottom: SPACING.xl,
   },
   profileContainer: {
-    height: height * 0.4,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: SPACING.xl,
   },
   profilePic: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 2,
+    width: moderateScale(80),
+    height: moderateScale(80),
+    borderRadius: moderateScale(40),
+    borderWidth: moderateScale(2),
   },
   buttonContainer: {
-    height: height * 0.2,
     alignItems: 'center',
     justifyContent: 'center',
-  }
+    paddingHorizontal: SPACING.md,
+  },
 }); 

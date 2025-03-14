@@ -1,12 +1,14 @@
+import { FONT_SIZES } from '../utils/dimensions';
+
 export const typography = {
   sizes: {
-    xs: 12,
-    sm: 14,
-    md: 16,
-    lg: 18,
-    xl: 20,
-    xxl: 24,
-    xxxl: 32,
+    xs: FONT_SIZES.xs,
+    sm: FONT_SIZES.sm,
+    md: FONT_SIZES.md,
+    lg: FONT_SIZES.lg,
+    xl: FONT_SIZES.xl,
+    xxl: FONT_SIZES.xxl,
+    xxxl: FONT_SIZES.xxxl,
   },
   weights: {
     light: '300',
@@ -31,45 +33,54 @@ export const textStyles = {
     fontSize: typography.sizes.xxxl,
     fontFamily: typography.families.bold,
     fontWeight: typography.weights.bold,
+    lineHeight: typography.sizes.xxxl * 1.2,
   },
   h2: {
     fontSize: typography.sizes.xxl,
     fontFamily: typography.families.bold,
     fontWeight: typography.weights.bold,
+    lineHeight: typography.sizes.xxl * 1.2,
   },
   h3: {
     fontSize: typography.sizes.xxl,
     fontFamily: typography.families.medium,
     fontWeight: typography.weights.medium,
+    lineHeight: typography.sizes.xxl * 1.2,
   },
   h4: {
     fontSize: typography.sizes.xl,
     fontFamily: typography.families.light,
     fontWeight: typography.weights.light,
+    lineHeight: typography.sizes.xl * 1.2,
   },
   body: {
     fontSize: typography.sizes.md,
     fontFamily: typography.families.regular,
     fontWeight: typography.weights.regular,
+    lineHeight: typography.sizes.md * 1.5,
   },
   bodySmall: {
     fontSize: typography.sizes.sm,
     fontFamily: typography.families.regular,
     fontWeight: typography.weights.regular,
+    lineHeight: typography.sizes.sm * 1.5,
   },
   button: {
     fontSize: typography.sizes.md,
     fontFamily: typography.families.semibold,
     fontWeight: typography.weights.semibold,
+    lineHeight: typography.sizes.md * 1.2,
   },
   header: {
     fontSize: typography.sizes.xl,
     fontFamily: typography.families.light,
     fontWeight: typography.weights.light,
+    lineHeight: typography.sizes.xl * 1.2,
   },
   subText: {
     fontSize: typography.sizes.sm,
     fontFamily: typography.families.regular,
     fontWeight: typography.weights.regular,
+    lineHeight: typography.sizes.sm * 1.5,
   },
 }; 

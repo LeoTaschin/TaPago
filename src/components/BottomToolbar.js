@@ -9,9 +9,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
-
-const SPACING = 20;
-const { width } = Dimensions.get('window');
+import { SPACING, moderateScale } from '../utils/dimensions';
 
 export function BottomToolbar({ activeTab, onTabChange }) {
   const { colors, textStyles } = useTheme();
@@ -72,7 +70,7 @@ export function BottomToolbar({ activeTab, onTabChange }) {
                     <Ionicons 
                       name={item.icon}
                       size={38} 
-                      color={colors.white}
+                      color={colors.textInvert}
                     />
                   </View>
                 </View>
@@ -107,7 +105,6 @@ export function BottomToolbar({ activeTab, onTabChange }) {
 const styles = StyleSheet.create({
   mainContainer: {
     width: '100%',
-    position: 'relative',
     position: 'absolute',
     bottom: 0,
     left: 0,
@@ -115,77 +112,77 @@ const styles = StyleSheet.create({
   },
   container: {
     width: '100%',
-    borderWidth: 1,
+    borderWidth: moderateScale(1),
     borderBottomWidth: 0,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    paddingBottom: Platform.OS === 'ios' ? 20 : 0,
+    borderTopLeftRadius: moderateScale(30),
+    borderTopRightRadius: moderateScale(30),
+    paddingBottom: Platform.OS === 'ios' ? moderateScale(20) : 0,
     overflow: 'visible',
   },
   content: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    paddingHorizontal: SPACING,
-    paddingVertical: SPACING / 2,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
   },
   menuItem: {
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
-    height: 60,
+    height: moderateScale(60),
   },
   centerMenuItem: {
-    height: 90,
-    marginTop: -30,
+    height: moderateScale(90),
+    marginTop: moderateScale(-30),
   },
   centerButtonWrapper: {
     height: '100%',
     justifyContent: 'flex-start',
-    paddingTop: 5,
+    paddingTop: moderateScale(5),
   },
   centerButton: {
-    width: 70,
-    height: 70,
-    borderRadius: 15,
+    width: moderateScale(70),
+    height: moderateScale(70),
+    borderRadius: moderateScale(15),
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: moderateScale(2),
     },
     shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    shadowRadius: moderateScale(3.84),
     elevation: 5,
   },
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4,
+    paddingVertical: SPACING.xs,
     position: 'relative',
     height: '100%',
   },
   menuText: {
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: moderateScale(12),
+    marginTop: SPACING.xs,
     textAlign: 'center',
   },
   indicator: {
     position: 'absolute',
-    top: -15,
-    width: 30,
-    height: 4,
-    borderRadius: 2,
+    top: moderateScale(-15),
+    width: moderateScale(30),
+    height: moderateScale(4),
+    borderRadius: moderateScale(2),
   },
   iosShadow: {
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: -2,
+      height: moderateScale(-2),
     },
     shadowOpacity: 0.1,
-    shadowRadius: 3.84,
+    shadowRadius: moderateScale(3.84),
   },
   androidShadow: {
     elevation: 5,
