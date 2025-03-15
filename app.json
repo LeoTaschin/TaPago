@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "TaPagp",
-    "slug": "TaPagp",
+    "name": "TaPago",
+    "slug": "TaPago",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,8 +16,10 @@
       "supportsTablet": true,
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Precisamos acessar suas fotos para permitir que você escolha uma foto de perfil.",
-        "NSCameraUsageDescription": "Precisamos acessar sua câmera para permitir que você tire uma foto de perfil."
-      }
+        "NSCameraUsageDescription": "Precisamos acessar sua câmera para permitir que você tire uma foto de perfil.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.leotaschin.TaPago"
     },
     "android": {
       "adaptiveIcon": {
@@ -28,10 +30,16 @@
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE"
-      ]
+      ],
+      "package": "com.leotaschin.TaPago"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "c6a254b3-a36a-4a9a-8352-fc4abbd52b6c"
+      }
     }
   }
 }
